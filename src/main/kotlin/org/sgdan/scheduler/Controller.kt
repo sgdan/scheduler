@@ -15,5 +15,8 @@ class Controller(private val backend: Backend) {
     }
 
     @Get("/scheduler/extend")
-    fun extend() = runBlocking { backend.extend() }
+    fun extend(): HttpResponse<Status> = runBlocking {
+        HttpResponse.ok(backend.extend())
+                .header("Cache-Control", "no-cache")
+    }
 }
