@@ -10,8 +10,7 @@ import java.time.ZonedDateTime.ofInstant
 import java.time.temporal.ChronoUnit
 import kotlin.math.max
 
-const val WINDOW = 8 // Eight hour up-time window
-const val WINDOW_SECONDS = WINDOW * 60 * 60
+private fun windowSeconds(window: Int) = window * 60 * 60
 
 private fun isWeekend(day: DayOfWeek) = setOf(SATURDAY, SUNDAY).contains(day)
 
@@ -51,31 +50,31 @@ fun lastScheduledMillis(startHour: Int?, now: Long, zoneId: ZoneId): Long =
 /**
  * Can only extend if there's less than 7 hours remaining
  */
-fun canExtend(lastStarted: Long, now: Long) =
-        remainingSeconds(lastStarted, now) < WINDOW_SECONDS - 60 * 60
+fun canExtend(lastStarted: Long, now: Long, window: Int) =
+        remainingSeconds(lastStarted, now, window) < windowSeconds(window) - 60 * 60
 
 /**
  * @return the last start time corresponding to a one hour extension
  */
-fun extend(lastStarted: Long, now: Long): Long {
-    val earliest = now - WINDOW_SECONDS * 1000
+fun extend(lastStarted: Long, now: Long, window: Int): Long {
+    val earliest = now - windowSeconds(window) * 1000
     val started = max(lastStarted, earliest)
     val hourLater = started + 60 * 60 * 1000
     return if (hourLater >= now) started else hourLater
 }
 
-fun remaining(lastStarted: Long, now: Long) =
-        remainingTime(remainingSeconds(lastStarted, now))
+fun remaining(lastStarted: Long, now: Long, window: Int) =
+        remainingTime(remainingSeconds(lastStarted, now, window), window)
 
-private fun remainingSeconds(lastStarted: Long, now: Long) =
-        max(lastStarted + WINDOW_SECONDS * 1000 - now, 0) / 1000
+private fun remainingSeconds(lastStarted: Long, now: Long, window: Int) =
+        max(lastStarted + windowSeconds(window) * 1000 - now, 0) / 1000
 
-private fun remainingTime(remaining: Long): String {
+private fun remainingTime(remaining: Long, window: Int): String {
     val m = remaining / 60
-    val h = (m / 60) % WINDOW
+    val h = (m / 60) % window
 
     return when {
-        m <= 0 || m >= WINDOW * 60 -> ""
+        m <= 0 || m >= window * 60 -> ""
         h > 0 -> "${h}h %02dm".format(m % 60)
         else -> "${m % 60}m"
     }

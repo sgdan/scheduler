@@ -24,11 +24,16 @@ class Config() {
 
     @Value("\${backend.useMultiAz:false}")
     lateinit var useMultiAz: String
+
+    @Value("\${backend.uptimeWindow:10}")
+    lateinit var uptimeWindow: String
 }
 
 @Singleton
 class Backend(private val cfg: Config) {
     private val useMultiAz = cfg.useMultiAz.toBoolean()
+
+    private val uptimeWindow: Int = cfg.uptimeWindow.toInt()
 
     private val weekdayStart: Int? = when (val x = cfg.weekdayStart.toIntOrNull()) {
         in 0..23 -> x
@@ -40,7 +45,7 @@ class Backend(private val cfg: Config) {
     private val aws = Aws(cfg.tagName, cfg.tagValue, cfg.ssmPath, useMultiAz)
 
     private val manager =
-            GlobalScope.run { managerActor(aws, zoneId, weekdayStart) }
+            GlobalScope.run { managerActor(aws, zoneId, weekdayStart, uptimeWindow) }
 
     suspend fun getStatus(): Status =
             CompletableDeferred<Status>()

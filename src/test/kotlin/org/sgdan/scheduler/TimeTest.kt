@@ -36,18 +36,19 @@ class TimeTest {
 
     @Test
     fun calcRemaining() {
+        val window = 10
         val m = 60 * 1000
         val start = 1573261444114
-        val stop = start + WINDOW * 60 * m // 8 hrs after start
-        assertEquals("", remaining(0, stop))
-        assertEquals("", remaining(stop - m + 1, start))
-        assertEquals("1m", remaining(start, stop - m))
-        assertEquals("5m", remaining(start, stop - 5 * m))
-        assertEquals("10m", remaining(start, stop - 10 * m))
-        assertEquals("1h 03m", remaining(start, stop - 63 * m))
-        assertEquals("7h 59m", remaining(start, start + m))
-        assertEquals("7h 59m", remaining(start, start + 1))
-        assertEquals("", remaining(start, start))
-        assertEquals("", remaining(start, start - 20 * m))
+        val stop = start + window * 60 * m // 8 hrs after start
+        assertEquals("", remaining(0, stop, window))
+        assertEquals("", remaining(stop - m + 1, start, window))
+        assertEquals("1m", remaining(start, stop - m, window))
+        assertEquals("5m", remaining(start, stop - 5 * m, window))
+        assertEquals("10m", remaining(start, stop - 10 * m, window))
+        assertEquals("1h 03m", remaining(start, stop - 63 * m, window))
+        assertEquals("9h 59m", remaining(start, start + m, window))
+        assertEquals("9h 59m", remaining(start, start + 1, window))
+        assertEquals("", remaining(start, start, window))
+        assertEquals("", remaining(start, start - 20 * m, window))
     }
 }

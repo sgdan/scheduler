@@ -24,7 +24,8 @@ sealed class Manager() {
 
 fun CoroutineScope.managerActor(aws: Aws,
                                 zoneId: ZoneId,
-                                weekdayStart: Int?) = actor<Manager> {
+                                weekdayStart: Int?,
+                                window: Int) = actor<Manager> {
     var lastStarted = aws.getLastStarted()
     var resourceList: List<Resource> = emptyList()
 
@@ -39,8 +40,8 @@ fun CoroutineScope.managerActor(aws: Aws,
     fun clock(now: Long) = ZonedDateTime.ofInstant(Instant.ofEpochMilli(now), zoneId).format(formatter)
     fun status(now: Long) = Status(
             clock = clock(now),
-            canExtend = canExtend(lastStarted, now),
-            remaining = remaining(lastStarted, now),
+            canExtend = canExtend(lastStarted, now, window),
+            remaining = remaining(lastStarted, now, window),
             weekdayStartMessage = weekdayStartMsg(),
             resources = resources())
 
@@ -83,7 +84,7 @@ fun CoroutineScope.managerActor(aws: Aws,
         }
 
         // check if anything should be started or stopped
-        val running = remaining(lastStarted, now).isNotEmpty()
+        val running = remaining(lastStarted, now, window).isNotEmpty()
         resourceList.forEach {
             when (it.type) {
                 "EC2" -> checkInstance(running, it)
@@ -110,7 +111,7 @@ fun CoroutineScope.managerActor(aws: Aws,
         is Manager.Extend -> {
             resourceList = resourceList.map { it.copy(state = "...") }
             val now = currentTimeMillis()
-            lastStarted = extend(lastStarted, now)
+            lastStarted = extend(lastStarted, now, window)
             aws.setLastStarted(lastStarted)
             msg.job.complete(status(now))
             log.info { "Extending by 1 hour" }
