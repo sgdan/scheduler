@@ -18,10 +18,10 @@ endpoints:
 
 backend:
   tag:
-    name: scheduler-enabled
+    name: ${SCHEDULER_TAG:scheduler-enabled}
     value: "true"
   zoneId: ${ZONE_ID:UTC}
-  ssmPath: /scheduler/timestamp
-  useMultiAz: false
-  #weekdayStart: 9
-  uptimeWindow: 10
+  ssmPath: ${SSM_PATH:/scheduler/timestamp}
+  useMultiAz: ${USE_MULTI_AZ:false}
+  weekdayStart: ${WEEKDAY_START:}
+  uptimeWindow: ${UPTIME_WINDOW:10}
