@@ -1,5 +1,6 @@
 package org.sgdan.scheduler
 
+import io.micronaut.context.annotation.Parallel
 import io.micronaut.context.annotation.Value
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.GlobalScope
@@ -30,6 +31,7 @@ class Config() {
 }
 
 @Singleton
+@Parallel // Don't wait until the first request before starting up!
 class Backend(private val cfg: Config) {
     private val useMultiAz = cfg.useMultiAz.toBoolean()
 
