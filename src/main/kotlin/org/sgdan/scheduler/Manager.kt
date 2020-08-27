@@ -68,8 +68,8 @@ fun CoroutineScope.managerActor(aws: Aws,
 
     fun checkRds(running: Boolean, r: Resource) {
         when {
-            running && r.state == "stopped" -> aws.startRds(r)
-            !running && r.isAvailable -> aws.stopRds(r)
+            running && !r.isAvailable -> aws.startRds(r)
+            !running && (r.state != "stopped") -> aws.stopRds(r)
         }
     }
 
