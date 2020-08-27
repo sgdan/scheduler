@@ -20,7 +20,7 @@ RUN gradle -g . shadowJar
 # e.g. /scheduler/build/libs/scheduler-1.0-SNAPSHOT-all.jar
 
 # Final image: OpenJDK
-FROM adoptopenjdk/openjdk13:jre-13.0.1_9-alpine
+FROM adoptopenjdk/openjdk14:jre-14.0.2_12-alpine
 WORKDIR /scheduler
 COPY --from=frontend /app/build ./ui
 COPY --from=backend /scheduler/build/libs/scheduler-*-all.jar scheduler.jar
