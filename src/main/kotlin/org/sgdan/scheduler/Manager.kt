@@ -62,14 +62,14 @@ fun CoroutineScope.managerActor(aws: Aws,
     fun checkCluster(running: Boolean, r: Resource) {
         when {
             running && r.state == "stopped" -> aws.startCluster(r)
-            !running && r.state == "available" -> aws.stopCluster(r)
+            !running && r.isAvailable -> aws.stopCluster(r)
         }
     }
 
     fun checkRds(running: Boolean, r: Resource) {
         when {
             running && r.state == "stopped" -> aws.startRds(r)
-            !running && r.state == "available" -> aws.stopRds(r)
+            !running && r.isAvailable -> aws.stopRds(r)
         }
     }
 

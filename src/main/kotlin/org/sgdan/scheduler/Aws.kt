@@ -180,8 +180,8 @@ class Aws(private val tagName: String,
             if (r.state == "stopped") {
                 rds.startDBInstance { it.dbInstanceIdentifier(r.id) }
                 log.info { "Starting rds ${r.name}" }
-            } else if (r.state == "available" && useMultiAz && r.multiAz) {
-                rds.modifyDBInstance { it.dbInstanceIdentifier(r.id).multiAZ(true) }
+            } else if (r.isAvailable && useMultiAz && !r.multiAz) {
+                rds.modifyDBInstance { it.dbInstanceIdentifier(r.id).multiAZ(true).applyImmediately(true) }
                 log.info { "Enabling Multi-AZ for rds ${r.name}" }
             }
         } catch (e: Exception) {
@@ -191,15 +191,15 @@ class Aws(private val tagName: String,
 
     fun stopRds(r: Resource) {
         try {
-            if (r.state == "available" && r.multiAz) {
-                rds.modifyDBInstance { it.dbInstanceIdentifier(r.id).multiAZ(false) }
+            if (r.isAvailable && r.multiAz) {
+                rds.modifyDBInstance { it.dbInstanceIdentifier(r.id).multiAZ(false).applyImmediately(true) }
                 log.info { "Disabling Multi-AZ for rds ${r.name}" }
-            } else if (r.state == "available") {
+            } else if (r.isAvailable) {
                 rds.stopDBInstance { it.dbInstanceIdentifier(r.id) }
                 log.info { "Stopping rds ${r.name}" }
             }
         } catch (e: Exception) {
-            log.error { "Unable to start rds ${r.name}: ${e.message}" }
+            log.error { "Unable to stop rds ${r.name}: ${e.message}" }
         }
     }
 }
