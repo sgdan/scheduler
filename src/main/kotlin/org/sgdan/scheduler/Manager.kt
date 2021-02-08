@@ -73,6 +73,18 @@ fun CoroutineScope.managerActor(aws: Aws,
         }
     }
 
+    fun checkDmsInstance(running: Boolean, r: Resource) {
+        // DmsInstance resources can't be stopped or started
+        //log.info{ "DMS instance stop and start not supported by AWS" }
+    }
+
+    fun checkDmsTask(running: Boolean, r: Resource) {
+        when {
+            running && !r.isAvailable -> aws.startReplicationTask(r)
+            !running && (r.state != "stopped") -> aws.stopReplicationTask(r)
+        }
+    }
+
     fun updateResources() {
         // check if lastStarted needs to be updated due to the schedule
         val now = currentTimeMillis()
@@ -91,12 +103,15 @@ fun CoroutineScope.managerActor(aws: Aws,
                 "ASG" -> checkAsg(running, it)
                 "RDS" -> checkRds(running, it)
                 "DocDB" -> checkCluster(running, it)
+                "DmsInstance" -> checkDmsInstance(running, it)
+                "DmsTask" -> checkDmsTask(running, it)
                 else -> log.error { "Invalid resource type: ${it.type}" }
             }
         }
 
         // load the latest config
-        resourceList = aws.instances() + aws.databases() + aws.clusters() + aws.asgs()
+        resourceList = aws.instances() + aws.databases() + aws.clusters() + aws.asgs() +
+                aws.replicationInstances() + aws.replicationTasks()
     }
 
     for (msg in channel) when (msg) {

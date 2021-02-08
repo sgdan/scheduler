@@ -2,6 +2,8 @@ package org.sgdan.scheduler
 
 import mu.KotlinLogging
 import software.amazon.awssdk.services.autoscaling.AutoScalingClient
+import software.amazon.awssdk.services.databasemigration.DatabaseMigrationClient
+import software.amazon.awssdk.services.databasemigration.model.StartReplicationTaskTypeValue
 import software.amazon.awssdk.services.docdb.DocDbClient
 import software.amazon.awssdk.services.ec2.Ec2Client
 import software.amazon.awssdk.services.ec2.model.Filter
@@ -25,6 +27,7 @@ class Aws(private val tagName: String,
     private val docdb: DocDbClient = DocDbClient.create()
     private val asg: AutoScalingClient = AutoScalingClient.create()
     private val ssm = SsmClient.create()
+    private val dms = DatabaseMigrationClient.create()
 
     private val ec2Filter = Filter.builder()
             .name("tag:$tagName").values(tagValue).build()
@@ -129,6 +132,33 @@ class Aws(private val tagName: String,
         emptyList<Resource>()
     }
 
+    fun replicationInstances(): List<Resource> = try {
+        dms.describeReplicationInstances().replicationInstances().map {
+            Resource(id = it.replicationInstanceIdentifier(),
+                    name = it.replicationInstanceIdentifier(),
+                    type = "DmsInstance",
+                    state = "${it.replicationInstanceStatus()} (Stop not supported)",
+                    isAvailable = it.replicationInstanceStatus() == "available")
+        }
+    } catch (e: Exception) {
+        log.error { "Unable to load AWS DMS replication instances: ${e.message}" }
+        emptyList<Resource>()
+    }
+
+    fun replicationTasks(): List<Resource> = try {
+        dms.describeReplicationTasks().replicationTasks().map {
+                Resource(id = it.replicationTaskIdentifier(),
+                        name = it.replicationTaskIdentifier(),
+                        type = "DmsTask",
+                        state = it.status(),
+                        isAvailable = it.status() == "running" || it.status() == "starting",
+                        arn = it.replicationTaskArn())
+        }
+    } catch (e: Exception) {
+        log.error { "Unable to load AWS DMS replication tasks: ${e.message}" }
+        emptyList<Resource>()
+    }
+
     fun startInstance(r: Resource) = try {
         ec2.startInstances { it.instanceIds(r.id) }
         log.info { "Starting instance ${r.name}" }
@@ -200,6 +230,26 @@ class Aws(private val tagName: String,
             }
         } catch (e: Exception) {
             log.error { "Unable to stop rds ${r.name}: ${e.message}" }
+        }
+    }
+
+    fun startReplicationTask(r: Resource) {
+        try {
+            dms.startReplicationTask{
+                it.replicationTaskArn(r.arn).startReplicationTaskType(StartReplicationTaskTypeValue.RESUME_PROCESSING)
+            }
+            log.info { "Starting replication task ${r.name}" }
+        } catch (e: Exception) {
+            log.error { "Unable to start replication task ${r.name}: ${e.message}" }
+        }
+    }
+
+    fun stopReplicationTask(r: Resource) {
+        try {
+            dms.stopReplicationTask{ it.replicationTaskArn(r.arn) }
+            log.info { "Stopping replication task ${r.name}" }
+        } catch (e: Exception) {
+            log.error { "Unable to stop replication task ${r.name}: ${e.message}" }
         }
     }
 }
