@@ -49,6 +49,7 @@ dependencies {
     implementation "software.amazon.awssdk:rds:$sdkVersion"
     implementation "software.amazon.awssdk:docdb:$sdkVersion"
     implementation "software.amazon.awssdk:ssm:$sdkVersion"
+    implementation "software.amazon.awssdk:databasemigration:$sdkVersion"
 
     // required if using WebIdentityTokenFileCredentialsProvider
     // e.g. running as k8s pod in EKS linked to IAM role via service account
