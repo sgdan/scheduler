@@ -16,6 +16,7 @@ data class Resource(
         val type: String,
         val state: String,
         val isAvailable: Boolean,
-        val multiAz: Boolean = false,   // RDS only
-        val size: Int = 0,              // ASG only
-        val max: Int = 0)               // ASG only
+        val multiAz: Boolean = false,    // RDS only
+        val size: Int = 0,               // ASG only
+        val max: Int = 0,                // ASG only
+        val arn: String = "")            // Replication tasks only
